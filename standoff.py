@@ -1,15 +1,33 @@
 import sys
 import re
+import csv
+import itertools
+
+from postag import syntaxnet_split_list
 
 from types import StringTypes
-
 from common import FormatError
 
 TEXTBOUND_LINE_RE = re.compile(r'^T\d+\t')
+RELATIONS_LINE_RE = re.compile(r'^R\d+\t')
 
 KEEP_LONGER = 'keep-longer'
 KEEP_SHORTER = 'keep-shorter'
 OVERLAP_RULES = [KEEP_LONGER, KEEP_SHORTER]
+
+class Relations(object):
+    def __init__(self, id_, type_, e1_, e2_):
+        self.id = id_
+        self.type = type_
+        self.e1 = e1_
+        self.e2 = e2_
+
+    @classmethod
+    def from_str(cls, string):
+        id_, type_offsets, empty = string.split('\t')
+        type_, e1, e2 = type_offsets.split(' ')
+
+        return cls(id_, type_, e1[5:], e2[5:])
 
 class Textbound(object):
     """Textbound annotation in BioNLP ST/brat format.
@@ -167,14 +185,21 @@ def _retag_sentence(sentence, offset_type):
                 break
 
         label = None if tb is None else tb.type
+        _id = ''
+
         if tb is None:
             tag = 'O'
+            _id = ''
         elif label == prev_label and tb.start < token.start:
             tag = 'I-'+label
+            _id = tb.id
         else:
             tag = 'B-'+label
+
+            _id = tb.id
         prev_label = label
 
+        token.id = _id
         token.tag = tag
 
 def retag_document(document, textbounds):
@@ -193,3 +218,84 @@ def retag_document(document, textbounds):
 
     for sentence in document.sentences:
         _retag_sentence(sentence, offset_type)
+
+def load_postags_into_document(document, filepos, previous_position, lines):
+    for sentence in document.sentences:
+        for token in sentence.tokens:
+
+            if token.text in syntaxnet_split_list:
+                previous_position = previous_position+1
+
+            token.pos = lines[previous_position].split("\t")[4]
+            previous_position = previous_position+1
+
+    return previous_position
+
+def parse_relations(input_, textbounds):
+    relations = []
+
+    if isinstance(input_, StringTypes):
+        input_ = input_.split('\n')
+
+    for l in input_:
+        l = l.rstrip('\n')
+
+        if not RELATIONS_LINE_RE.search(l):
+            continue
+
+        relations.append(Relations.from_str(l))
+
+    return relations
+
+def relate_document(document, relations):
+    for sentence in document.sentences:
+
+        captured_relations_in_sentence = {}
+
+        for relation in relations:
+        # print [relation.id, relation.type, relation.e1, relation.e2]
+
+            captured_relations_in_sentence[relation.id] = [[], '', [], '', '']
+
+            which_token = 0
+            for token in sentence.tokens:
+                # print [relation.e1, relation.e2, token.id, (relation.e1 == token.id), (relation.e2 == token.id)]
+
+                if (relation.e1 == token.id):
+                    captured_relations_in_sentence[relation.id][0].append(which_token)
+                    captured_relations_in_sentence[relation.id][1] = token.id
+                    captured_relations_in_sentence[relation.id][4] = relation.type
+
+                if (relation.e2 == token.id):
+                    captured_relations_in_sentence[relation.id][2].append(which_token)
+                    captured_relations_in_sentence[relation.id][3] = token.id
+                    captured_relations_in_sentence[relation.id][4] = relation.type
+
+                which_token = which_token+1
+
+        for rel, mapping in captured_relations_in_sentence.items():
+            if len(mapping[0]) > 0 and len(mapping[2]) > 0:
+                # print [rel, mapping]
+
+                for i in mapping[0]:
+                    sentence.tokens[i].rel.append(rel)
+                    sentence.tokens[i].reltype.append(mapping[4])
+                    sentence.tokens[i].relorder.append('F') #"to", direction of the arrow
+                for i in mapping[2]:
+                    sentence.tokens[i].rel.append(rel)
+                    sentence.tokens[i].reltype.append(mapping[4])
+                    sentence.tokens[i].relorder.append('T') #"to", direction of the arrow
+
+    # for sentence in document.sentences:
+    #     for token in sentence.tokens:
+    #         print [token.rel, token.reltype, token.relorder, token.id, token.tag, token.text, token.pos]
+    #     print ""
+    #     print ""
+
+    # print ""
+    # print ""
+    # print "--------------------------"
+    # print ""
+    # print ""
+
+    return

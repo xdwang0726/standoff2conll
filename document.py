@@ -10,7 +10,8 @@ from tagsequence import is_tag, is_start_tag, is_continue_tag, OUT_TAG
 
 # TODO: standoff.py interface should be narrower
 from standoff import Textbound, parse_textbounds, eliminate_overlaps, \
-    verify_textbounds, retag_document
+    verify_textbounds, retag_document, parse_relations, \
+    relate_document
 
 # UI identifiers for supported formats
 TEXT_FORMAT = 'text'
@@ -36,6 +37,11 @@ class Token(object):
     features."""
 
     def __init__(self, text, start, tag=OUT_TAG, fvec=None):
+        self.id = ''
+        self.pos = ''
+        self.rel = []
+        self.reltype = []
+        self.relorder = []
         self.tag = tag
         self.text = text
         self.start = start
@@ -58,6 +64,10 @@ class Token(object):
         assert self.tag and self.tag != OUT_TAG
         return self.tag[2:]
 
+    def filter_BIO_tag(self):
+        if len(self.tag) > 1:
+            self.tag = self.tag[2:]
+
     def to_nersuite(self, exclude_tag=False):
         """Return Token in NERsuite format."""
 
@@ -77,8 +87,15 @@ class Token(object):
 
     def to_conll(self):
         """Return Token in CoNLL-like format."""
+
+        self.filter_BIO_tag()
+
         fields = [unicode(self.text), self.tag]
         return '\t'.join(chain(fields, self.fvec))
+
+    def to_rothandyih(self):
+        # self.filter_BIO_tag()
+        return self
 
     @classmethod
     def from_text(cls, text, offset=0):
@@ -172,6 +189,75 @@ class Sentence(object):
         
         # sentences terminated with empty lines
         return '\n'.join(chain((t.to_conll() for t in tokens), ['\n']))
+
+    def to_rothandyih(self, sentence_id, exclude_tag=False):
+
+        output = ''
+
+        prev_tag = 'O'
+        pos_to_print = []
+        text_to_print = []
+
+        rels = {}
+
+        i = 0
+        for t in self.tokens:
+            if t.tag == 'O' and prev_tag == 'O':
+                output += "\t".join([str(sentence_id), t.tag, str(i), 'O', t.pos, t.text, 'O', 'O', 'O']) + "\n"
+                i = i+1
+
+                prev_tag = t.tag
+            elif t.tag == 'O' and prev_tag != 'O':
+                output += "\t".join([str(sentence_id), prev_tag[2:], str(i), 'O', "/".join(pos_to_print), "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+                i = i+1
+
+                output += "\t".join([str(sentence_id), t.tag, str(i), 'O', t.pos, t.text, 'O', 'O', 'O']) + "\n"
+                i = i+1
+
+                pos_to_print = []
+                text_to_print = []
+                prev_tag = t.tag
+            else:
+                if (len(t.rel) > 0):
+                    for r in range(len(t.rel)):
+                        if (t.rel[r] not in rels):
+                            rels[t.rel[r]] = ['', -1, -1]
+
+                        if (t.relorder[r] == 'F'):
+                            rels[t.rel[r]][1] = i
+
+                        if (t.relorder[r] == 'T'):
+                            rels[t.rel[r]][2] = i
+
+                        rels[t.rel[r]][0] = t.reltype[r]
+
+                if (t.tag[:2] == "B-" and prev_tag != 'O'):
+                    output += "\t".join([str(sentence_id), prev_tag[2:], str(i), 'O', "/".join(pos_to_print), "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+                    i = i+1
+                    pos_to_print = []
+                    text_to_print = []
+                    prev_tag = t.tag
+
+                pos_to_print.append(t.pos)
+                text_to_print.append(t.text)
+
+                prev_tag = t.tag
+
+        if prev_tag != 'O':
+            output += "\t".join([str(sentence_id), prev_tag[2:], str(i), 'O', "/".join(pos_to_print), "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+            prev_tag = 'O'
+
+        output += '\n'
+
+        if (len(rels) > 0):
+            for k, v in rels.items():
+                output += str(v[1]) + " " + str(v[2]) + " " + v[0] + '\n'
+            output += '\n'
+        else:
+            output += '\n'
+
+        return output
+
 
     def standoffs(self, index):
         """Return sentence annotations as list of Standoff objects."""
@@ -277,6 +363,13 @@ class Document(object):
 
         return ''.join((s.to_conll() for s in self.sentences))
 
+    def to_rothandyih(self):
+        output = ''
+        for i, s in enumerate(self.sentences):
+            output += s.to_rothandyih(sentence_id = i)
+
+        return output
+
     def to_standoff(self):
         """Return Document annotations in BioNLP ST/brat-flavored
         standoff format."""
@@ -371,7 +464,7 @@ class Document(object):
 
     @classmethod
     def from_standoff(cls, text, annotations, sentence_split=True,
-                      overlap_rule=None):
+                      overlap_rule=None, filepos=False):
         """Return Document given text and standoff annotations."""
 
         # first create a document from the text without annotations
@@ -381,9 +474,15 @@ class Document(object):
         document = cls.from_text(text, sentence_split)
 
         textbounds = parse_textbounds(annotations)
+        relations = parse_relations(annotations, textbounds)
         verify_textbounds(textbounds, text)
         textbounds = eliminate_overlaps(textbounds, overlap_rule)
         retag_document(document, textbounds)
 
+        # load POS tags from a file in which each line contains
+        # WORD\tPOSTAG
+
+        if filepos != False:
+            relate_document(document, relations)
+
         return document
-        
