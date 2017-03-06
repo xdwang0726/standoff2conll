@@ -16,7 +16,7 @@ from tagsequence import TAGSETS, IO_TAGSET, IOBES_TAGSET, DEFAULT_TAGSET
 from tagsequence import BIO_to_IO, BIO_to_IOBES
 from standoff import OVERLAP_RULES, load_postags_into_document
 
-OUTPUT_TYPES = ['CONLL', 'ROTHANDYIH']
+OUTPUT_TYPES = {'CONLL': 0, 'ROTHANDYIH': 1}
 
 def argparser():
     import argparse
@@ -37,6 +37,12 @@ def argparser():
                     help='tagset (default %s)' % DEFAULT_TAGSET)
     ap.add_argument('-p', '--postag', choices=TAGSETS, default=None,
                     help='tagset (default %s)' % DEFAULT_TAGSET)
+
+    ap.add_argument('--process', choices=['CONLL','ROTHANDYIH'], default='CONLL',
+                    help='switch between processes for the output format CONLL, or ROTHANDYIH')
+    ap.add_argument('--process_pos_tag_input',
+                    help='the pos tag input file used for ROTHANDYIH')
+
     return ap
 
 def is_standoff_file(fn):
@@ -134,22 +140,27 @@ def conversion_entry(argv, which, filepos = False):
     return data
 
 def convert_and_return(argv, which, filepos):
-    args = argparser().parse_args(argv[1:])
-    if not os.path.isdir(args.directory):
-        error('Not a directory: {}'.format(args.directory))
+    if not os.path.isdir(argv.directory):
+        error('Not a directory: {}'.format(argv.directory))
         return 1
 
-    if which == OUTPUT_TYPES[0]:
-        data = convert_directory_conll(args.directory, args)
-    elif which == OUTPUT_TYPES[1]:
-        data = convert_directory_rothandyih(args.directory, args, filepos)
+    if which == OUTPUT_TYPES['CONLL']:
+        data = convert_directory_conll(argv.directory, argv)
+    elif which == OUTPUT_TYPES['ROTHANDYIH']:
+        data = convert_directory_rothandyih(argv.directory, argv, filepos)
 
-    if args.asciify:
+    if argv.asciify:
         log_missing_ascii_mappings()
     return data
 
 def main(argv):
-    data = convert_and_return(argv, OUTPUT_TYPES[0])
+    argv = argparser().parse_args(argv[1:])
+
+    if argv.process == 'CONLL':
+        data = convert_and_return(argv, OUTPUT_TYPES[argv.process], False)
+    elif argv.process == 'ROTHANDYIH':
+        data = convert_and_return(argv, OUTPUT_TYPES[argv.process], argv.process_pos_tag_input)
+
     sys.stdout.write(data)
     return 0
 

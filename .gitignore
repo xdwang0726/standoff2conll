@@ -1,0 +1,6 @@
+.DS_Store
+.idea
+.env
+*.pyc
+internallib/__pycache_
+internallib/__pycache__/

@@ -221,6 +221,7 @@ def retag_document(document, textbounds):
 
 def load_postags_into_document(document, filepos, previous_position, lines):
     for sentence in document.sentences:
+
         for token in sentence.tokens:
 
             if token.text in syntaxnet_split_list:
@@ -253,8 +254,6 @@ def relate_document(document, relations):
         captured_relations_in_sentence = {}
 
         for relation in relations:
-        # print [relation.id, relation.type, relation.e1, relation.e2]
-
             captured_relations_in_sentence[relation.id] = [[], '', [], '', '']
 
             which_token = 0
@@ -285,17 +284,3 @@ def relate_document(document, relations):
                     sentence.tokens[i].rel.append(rel)
                     sentence.tokens[i].reltype.append(mapping[4])
                     sentence.tokens[i].relorder.append('T') #"to", direction of the arrow
-
-    # for sentence in document.sentences:
-    #     for token in sentence.tokens:
-    #         print [token.rel, token.reltype, token.relorder, token.id, token.tag, token.text, token.pos]
-    #     print ""
-    #     print ""
-
-    # print ""
-    # print ""
-    # print "--------------------------"
-    # print ""
-    # print ""
-
-    return
