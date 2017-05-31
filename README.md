@@ -7,12 +7,32 @@ This custom CONLL 2004 format is used to train the Stanford Relation Extractor m
 
 ### USAGE
 
-1. Annotate your text in brat.
+1. Annotate your text in [brat](http://brat.nlplab.org/index.html).
 
-2. Run the command targetting the folder with the annotated folder:  
-  `./standoff2conll.py data/input/training/annotated/  > data/input/training/transformed/documents.tsv`
+2. Generate Stanford NER training input - run the command targetting the folder with the annotated text (with the *.txt and *.ann files):  
+  `./standoff2conll.py data/input/training/annotated/ > data/input/training/transformed/documents.tsv`
 
-3. It can not be used to train the Stanford Relation Extractor. NOTE: if you use custom entities/relations, please see
+3. Prepare to generated the RE trianing input - prepare a columnar file with the POS tags of the raw annoated text. E.g.:
+```
+1	7	_	NUM	CD	_	0	ROOT	_	_
+1	.	_	.	.	_	0	ROOT	_	_
+1	RELATED	_	VERB	VBN	_	0	ROOT	_	_
+1	WORK	_	VERB	VB	_	0	ROOT	_	_
+1	LSH	_	NOUN	NNP	_	0	ROOT	_	_
+1	functions	_	NOUN	NNS	_	0	ROOT	_	_
+1	are	_	VERB	VBP	_	0	ROOT	_	_
+1	ﬁ	_	.	NFP	_	0	ROOT	_	_
+1	rst	_	ADV	RB	_	0	ROOT	_	_
+1	introduced	_	VERB	VBN	_	0	ROOT	_	_
+1	for	_	ADP	IN	_	0	ROOT	_	_
+```
+Starting from column 0, note that column 1 contains the token text and column 4 contains its POS tag. The file above can be generated as an output from e.g.: the Google's Syntaxnet Tensorflow model. For an example, see how [TETRE prepares such file](https://github.com/aoldoni/tetre/blob/develop/lib/brat_to_stanford/train.py).
+
+4. Using the above file, generate Stanford RE training input - run the command targetting the folder with the annotated text (with the *.txt and *.ann files):  
+  `./standoff2conll.py data/input/training/annotated/ --process ROTHANDYIH --process_pos_tag_input path/to/postagfile.tsv > data/input/training/transformed/documents.corp`
+
+5. Text in the conll2004 format is now in the tsv file. It can now be used to train the Stanford Relation Extractor. NOTE: if you use custom entities/relations, please see the [section regarding custom entities](#custom-entities-in-stanford-re-training) below.
+
 
 ### THE CONLL 2004 FORMAT
 
@@ -64,9 +84,26 @@ The format is described [here](http://cogcomp.cs.illinois.edu/page/resource_view
 32	39	Work_For
 ```
 
+
 ### CUSTOM ENTITIES IN STANFORD RE TRAINING
 
+By default Relation Extractor only accepts a few core entities, such as PEOPLE, ORGANISATION and LOCATION. If you attempt different entities you will see the following error:
+```
+Caused by: java.lang.RuntimeException: Cannot normalize ner tag Concept
+	at edu.stanford.nlp.ie.machinereading.domains.roth.RothCONLL04Reader.getNormalizedNERTag(RothCONLL04Reader.java:85)
+	at edu.stanford.nlp.ie.machinereading.domains.roth.RothCONLL04Reader.readSentence(RothCONLL04Reader.java:148)
+	at edu.stanford.nlp.ie.machinereading.domains.roth.RothCONLL04Reader.read(RothCONLL04Reader.java:56)
+	at edu.stanford.nlp.ie.machinereading.GenericDataSetReader.parse(GenericDataSetReader.java:132)
+	... 3 more
+```
 
+To use your custom entities you have a few options:
+
+1) Hard-code the new list of entities in the already hard-coded list inside the machine reading code, as per [this commit](https://github.com/aoldoni/stanford-corenlp/commit/ae6782266cb40629aefcecbab397da47f808abc3).
+
+2) Use [this](https://github.com/aoldoni/stanford-corenlp/) fork I prepared of the Stanford CoreNLP. In this fork a new `possibleEntities` paremeter acceptes a comma separated list of entities for normalization.
+
+3) Or wait until [support is added](https://github.com/stanfordnlp/CoreNLP/issues/359).
 
 # LICENSE
 
