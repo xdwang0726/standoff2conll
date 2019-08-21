@@ -114,8 +114,8 @@ def convert_directory_rothandyih(directory, options, filepos):
     conll_data = ''
 
     lines = []
-    with open(filepos) as f:
-        lines = f.readlines()
+    #with open(filepos) as f:
+        #lines = f.readlines()
 
     previous_position = 0
 
@@ -128,7 +128,7 @@ def convert_directory_rothandyih(directory, options, filepos):
         if options.asciify:
             document_to_ascii(document)
 
-        previous_position = load_postags_into_document(document, filepos, previous_position, lines)
+        #previous_position = load_postags_into_document(document, filepos, previous_position, lines)
 
         conll_data = conll_data + document.to_rothandyih()
     
