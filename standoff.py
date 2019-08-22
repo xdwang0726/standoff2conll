@@ -24,7 +24,7 @@ class Relations(object):
 
     @classmethod
     def from_str(cls, string):
-        id_, type_offsets, empty = string.split('\t')
+        id_, type_offsets = string.split('\t')
         type_, e1, e2 = type_offsets.split(' ')
 
         return cls(id_, type_, e1[5:], e2[5:])
