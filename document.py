@@ -195,7 +195,7 @@ class Sentence(object):
         output = ''
 
         prev_tag = 'O'
-        pos_to_print = []
+        #pos_to_print = []
         text_to_print = []
 
         rels = {}
@@ -203,18 +203,18 @@ class Sentence(object):
         i = 0
         for t in self.tokens:
             if t.tag == 'O' and prev_tag == 'O':
-                output += "\t".join([str(sentence_id), t.tag, str(i), 'O', t.pos, t.text, 'O', 'O', 'O']) + "\n"
+                output += "\t".join([str(sentence_id), t.tag, str(i), 'O', 'O', t.text, 'O', 'O', 'O']) + "\n"
                 i = i+1
 
                 prev_tag = t.tag
             elif t.tag == 'O' and prev_tag != 'O':
-                output += "\t".join([str(sentence_id), prev_tag[2:], str(i), 'O', "/".join(pos_to_print), "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+                output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
                 i = i+1
 
-                output += "\t".join([str(sentence_id), t.tag, str(i), 'O', t.pos, t.text, 'O', 'O', 'O']) + "\n"
+                output += "\t".join([str(sentence_id), t.tag, str(i), 'O', 'O', t.text, 'O', 'O', 'O']) + "\n"
                 i = i+1
 
-                pos_to_print = []
+                #pos_to_print = []
                 text_to_print = []
                 prev_tag = t.tag
             else:
@@ -231,20 +231,20 @@ class Sentence(object):
 
                         rels[t.rel[r]][0] = t.reltype[r]
 
-                if (t.tag[:2] == "B-" and prev_tag != 'O'):
-                    output += "\t".join([str(sentence_id), prev_tag[2:], str(i), 'O', "/".join(pos_to_print), "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
-                    i = i+1
-                    pos_to_print = []
-                    text_to_print = []
-                    prev_tag = t.tag
+                #if (t.tag[:2] == "B-" and prev_tag != 'O'):
+                output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+                i = i+1
+                    #pos_to_print = []
+                text_to_print = []
+                prev_tag = t.tag
 
-                pos_to_print.append(t.pos)
+                #pos_to_print.append(t.pos)
                 text_to_print.append(t.text)
 
                 prev_tag = t.tag
 
         if prev_tag != 'O':
-            output += "\t".join([str(sentence_id), prev_tag[2:], str(i), 'O', "/".join(pos_to_print), "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+            output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
             prev_tag = 'O'
 
         output += '\n'
