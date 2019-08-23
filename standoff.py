@@ -8,8 +8,8 @@ from postag import syntaxnet_split_list
 from types import StringTypes
 from common import FormatError
 
-TEXTBOUND_LINE_RE = re.compile(r'^T\d+\t')
-RELATIONS_LINE_RE = re.compile(r'^R\d+\t')
+TEXTBOUND_LINE_RE = re.compile(r'^T\d+-?\d*\t')
+RELATIONS_LINE_RE = re.compile(r'^R\d+-?\d*\t')
 
 KEEP_LONGER = 'keep-longer'
 KEEP_SHORTER = 'keep-shorter'
