@@ -251,7 +251,7 @@ class Sentence(object):
 
         if (len(rels) > 0):
             for k, v in rels.items():
-                output += str(v[1]) + " " + str(v[2]) + " " + v[0] + '\n'
+                output += str(v[1]) + "\t" + str(v[2]) + "\t" + v[0] + '\n'
             output += '\n'
         else:
             output += '\n'
