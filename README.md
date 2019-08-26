@@ -1,39 +1,18 @@
 # BRAT STANDOFF2CONLL 2004
 
-An extended version of the original Sampo Pyysalo's conversion script that also supports conversion from brat-flavored standoff to the D. Roth and W. Yih CoNLL 2004 Relation Extractor training format.
+An extended version of the original Sampo Pyysalo's and aoldoni's conversion script that also supports conversion from brat-flavored standoff to the D. Roth and W. Yih CoNLL 2004 Relation Extractor training format.
 
 This custom CONLL 2004 format is used to train the Stanford Relation Extractor model. An usage example can be seen in the https://github.com/aoldoni/tetre repository.
 
 
 ### USAGE
+1. run the command targetting the folder with the annotated text (with the *.txt and *.ann files):  
+  `./standoff2conll.py data/annotated/ --process ROTHANDYIH --tagset IOBES > conll04.tsv`
 
-1. Annotate your text in [brat](http://brat.nlplab.org/index.html).
-
-2. Generate Stanford NER training input - run the command targetting the folder with the annotated text (with the *.txt and *.ann files):  
-  `./standoff2conll.py data/input/training/annotated/ > data/input/training/transformed/documents.tsv`
-
-3. Prepare to generated the RE trianing input - prepare a columnar file with the POS tags of the raw annoated text. E.g.:
-```
-1	7	_	NUM	CD	_	0	ROOT	_	_
-1	.	_	.	.	_	0	ROOT	_	_
-1	RELATED	_	VERB	VBN	_	0	ROOT	_	_
-1	WORK	_	VERB	VB	_	0	ROOT	_	_
-1	LSH	_	NOUN	NNP	_	0	ROOT	_	_
-1	functions	_	NOUN	NNS	_	0	ROOT	_	_
-1	are	_	VERB	VBP	_	0	ROOT	_	_
-1	ﬁ	_	.	NFP	_	0	ROOT	_	_
-1	rst	_	ADV	RB	_	0	ROOT	_	_
-1	introduced	_	VERB	VBN	_	0	ROOT	_	_
-1	for	_	ADP	IN	_	0	ROOT	_	_
-```
-Starting from column 0, note that column 1 contains the token text and column 4 contains its POS tag. The file above can be generated as an output from e.g.: the Google's Syntaxnet Tensorflow model. For an example, see how [TETRE prepares such file](https://github.com/aoldoni/tetre/blob/develop/lib/brat_to_stanford/train.py).
-
-4. Using the above file, generate Stanford RE training input - run the command targetting the folder with the annotated text (with the *.txt and *.ann files):  
-  `./standoff2conll.py data/input/training/annotated/ --process ROTHANDYIH --process_pos_tag_input path/to/postagfile.tsv > data/input/training/transformed/documents.corp`
-
-5. Text in the conll2004 format is now in the tsv file. It can now be used to train the Stanford Relation Extractor. NOTE: if you use custom entities/relations, please see the [section regarding custom entities](#custom-entities-in-stanford-re-training) below.
-
-
+2. use regular expression to remove extra spaces
+ a. [\n]{3,}
+ b. [\d]+\t[\d]+[\t].*[\n]{2,}
+ 
 ### THE CONLL 2004 FORMAT
 
 The format is described [here](http://cogcomp.cs.illinois.edu/page/resource_view/43) with an example [here](http://cogcomp.cs.illinois.edu/Data/ER/conll04.corp). See an example below where the relation triplet Work_For(Bruno/Pusterla, Italian/Agricultural/Confederation) is denoted.
