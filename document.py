@@ -62,11 +62,11 @@ class Token(object):
     def tagged_type(self):
         # TODO: DRY!
         assert self.tag and self.tag != OUT_TAG
-        return self.tag[2:]
+        return self.tag
 
     def filter_BIO_tag(self):
         if len(self.tag) > 1:
-            self.tag = self.tag[2:]
+            self.tag = self.tag
 
     def to_nersuite(self, exclude_tag=False):
         """Return Token in NERsuite format."""
@@ -231,12 +231,12 @@ class Sentence(object):
 
                         rels[t.rel[r]][0] = t.reltype[r]
 
-                #if (t.tag[:2] == "B-" and prev_tag != 'O'):
-                output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
-                i = i+1
+                if (prev_tag != 'O'):
+                    output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+                    i = i+1
                     #pos_to_print = []
-                text_to_print = []
-                prev_tag = t.tag
+                    text_to_print = []
+                    prev_tag = t.tag
 
                 #pos_to_print.append(t.pos)
                 text_to_print.append(t.text)
