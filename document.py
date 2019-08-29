@@ -218,6 +218,13 @@ class Sentence(object):
                 text_to_print = []
                 prev_tag = t.tag
             else:
+                if (prev_tag != 'O'):
+                    output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
+                    i = i+1
+                    #pos_to_print = []
+                    text_to_print = []
+                    prev_tag = t.tag
+                
                 if (len(t.rel) > 0):
                     for r in range(len(t.rel)):
                         if (t.rel[r] not in rels):
@@ -230,13 +237,6 @@ class Sentence(object):
                             rels[t.rel[r]][2] = i
 
                         rels[t.rel[r]][0] = t.reltype[r]
-
-                if (prev_tag != 'O'):
-                    output += "\t".join([str(sentence_id), prev_tag, str(i), 'O', 'O', "/".join(text_to_print), 'O', 'O', 'O']) + "\n"
-                    i = i+1
-                    #pos_to_print = []
-                    text_to_print = []
-                    prev_tag = t.tag
 
                 #pos_to_print.append(t.pos)
                 text_to_print.append(t.text)
