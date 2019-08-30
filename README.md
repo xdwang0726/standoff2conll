@@ -10,9 +10,9 @@ This custom CONLL 2004 format is used to train the Stanford Relation Extractor m
   `./standoff2conll.py data/annotated/ --process ROTHANDYIH --tagset IOBES > conll04.tsv`
 
 2. use regular expression to remove extra spaces
- a. [\n]{3,}
- b. [\d]+\t[\d]+[\t].*[\n]{2,}
- c. [\d]+[\t][\d]+[\t][a-zA-Z-]+[\n][\d]+[\t][a-zA-Z](check whether rel and new ner doesn't have new line)
+ `a. [\n]{3,}`
+ `b. [\d]+\t[\d]+[\t].*[\n]{3,}`
+ `c. [\d]+[\t][\d]+[\t][a-zA-Z-]+[\n][\d]+[\t][a-zA-Z](check whether rel and new ner doesn't have new line)`
  
 ### THE CONLL 2004 FORMAT
 
